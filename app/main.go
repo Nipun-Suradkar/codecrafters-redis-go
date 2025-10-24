@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"net"
 	"os"
+	"strings"
 )
 
 // Ensures gofmt doesn't remove the "net" and "os" imports in stage 1 (feel free to remove this!)
@@ -29,19 +32,50 @@ func main() {
 	}
 
 }
+
 func handleConnection(conn net.Conn) {
-	buffer := make([]byte, 4096)
+	defer conn.Close()
+
+	reader := bufio.NewReader(conn)
+	writer := bufio.NewWriter(conn)
 
 	for {
-		_, err := conn.Read(buffer)
+		// Try to decode a RESP array from the reader
+		cmd, err := decodeRESPFromReader(reader)
 		if err != nil {
-			fmt.Println("Error reading from connection:", err)
+			if err == io.EOF {
+				fmt.Println("Connection closed")
+			} else {
+				fmt.Println("Error decoding RESP:", err)
+			}
 			return
 		}
-		_, err = conn.Write([]byte("+PONG\r\n"))
-		if err != nil {
-			fmt.Println("Error accepting connection: ", err.Error())
-			os.Exit(1)
+		fmt.Println("Decoded command:", cmd)
+
+		handleCommand(cmd, writer)
+
+	}
+}
+
+func handleCommand(cmd []string, writer *bufio.Writer) {
+	if len(cmd) == 0 {
+		return
+	}
+
+	if strings.EqualFold(cmd[0], "echo") {
+		if len(cmd) > 1 {
+			resp := fmt.Sprintf("$%d\r\n%s\r\n", len(cmd[1]), cmd[1])
+			writer.WriteString(resp)
+			writer.Flush()
+		} else {
+			writer.WriteString("-ERR missing argument\r\n")
+			writer.Flush()
 		}
+	} else if strings.EqualFold(cmd[0], "ping") {
+		writer.WriteString("+PONG\r\n")
+		writer.Flush()
+	} else {
+		writer.WriteString("-ERR unknown command\r\n")
+		writer.Flush()
 	}
 }
