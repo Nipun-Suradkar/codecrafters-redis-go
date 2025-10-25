@@ -6,6 +6,8 @@ import (
 	"io"
 	"net"
 	"os"
+
+	"github.com/codecrafters-io/redis-starter-go/app/command"
 )
 
 // Ensures gofmt doesn't remove the "net" and "os" imports in stage 1 (feel free to remove this!)
@@ -37,7 +39,7 @@ func handleConnection(conn net.Conn) {
 
 	reader := bufio.NewReader(conn)
 	writer := bufio.NewWriter(conn)
-	commandHandler := NewCommandHelper(writer)
+	commandHandler := command.NewCommand(writer)
 	for {
 		// Try to decode a RESP array from the reader
 		cmd, err := decodeRESPFromReader(reader)
