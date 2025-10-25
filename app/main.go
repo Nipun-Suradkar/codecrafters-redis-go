@@ -12,6 +12,7 @@ import (
 
 	"github.com/codecrafters-io/redis-starter-go/app/command"
 	"github.com/codecrafters-io/redis-starter-go/app/redis_server"
+	"github.com/codecrafters-io/redis-starter-go/app/replication"
 	"github.com/codecrafters-io/redis-starter-go/app/resp"
 )
 
@@ -22,6 +23,11 @@ func main() {
 	log.Println("Server listening on port 6379...")
 
 	redisServer := initializeRedisServer()
+
+	if redisServer.ReplicaOf != "" {
+		replication.InformMasterServer(redisServer)
+	}
+
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", redisServer.Port))
 	if err != nil {
 		log.Fatalf("Failed to bind to port 6379: %v", err)
