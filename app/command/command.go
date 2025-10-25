@@ -3,10 +3,14 @@ package command
 import (
 	"bufio"
 	"fmt"
+	"sort"
 	"strings"
+	"sync"
 
 	"github.com/codecrafters-io/redis-starter-go/app/data_store"
 )
+
+var once sync.Once
 
 type Command struct {
 	DataStore *data_store.DataStore
@@ -18,6 +22,9 @@ type CommandInterface interface {
 }
 
 func NewCommand(w *bufio.Writer, dataStore *data_store.DataStore) *Command {
+	once.Do(func() {
+		sort.Strings(SupportedCommands)
+	})
 	return &Command{Writer: w, DataStore: dataStore}
 }
 
@@ -29,6 +36,11 @@ func (c *Command) HandleCommand(cmd []string) {
 	}
 
 	cmdName := strings.ToLower(cmd[0])
+	if !isSupportedCommand(cmdName) {
+		c.writeError(fmt.Sprintf("ERR unknown command '%s'", cmdName))
+		return
+	}
+
 	args := cmd[1:]
 
 	if handler, ok := c.commands()[cmdName]; ok {
@@ -76,4 +88,11 @@ func (c *Command) commands() map[string]CommandFunc {
 			}
 		},
 	}
+
+}
+
+func isSupportedCommand(cmd string) bool {
+	cmd = strings.ToLower(cmd)
+	i := sort.SearchStrings(SupportedCommands, cmd)
+	return i < len(SupportedCommands) && SupportedCommands[i] == cmd
 }

@@ -13,3 +13,12 @@ const (
 
 	ErrWrongArgCount = "wrong number of arguments for '%s'"
 )
+
+var SupportedCommands = []string{
+	CmdEcho,
+	CmdPing,
+	CmdSet,
+	CmdGet,
+	CmdConfig,
+	CmdInfo,
+}
