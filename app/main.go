@@ -51,9 +51,10 @@ func initializeRedisServer() *redis_server.RedisServer {
 	flag.Parse()
 
 	redisServer := &redis_server.RedisServer{
-		DbFilename: *dbFilename,
-		DbDir:      *dir,
-		ReplicaOf:  *replicaOf,
+		DbFilename:    *dbFilename,
+		DbDir:         *dir,
+		ReplicaOf:     *replicaOf,
+		ReplicationID: "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb",
 	}
 
 	portNum := 6379 //default port

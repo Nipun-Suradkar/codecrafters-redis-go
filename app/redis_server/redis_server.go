@@ -6,11 +6,13 @@ import (
 )
 
 type RedisServer struct {
-	DbFilename string
-	DbDir      string
-	Port       int
-	ReplicaOf  string
-	dataMap    sync.Map
+	DbFilename    string
+	DbDir         string
+	Port          int
+	ReplicaOf     string
+	ReplicationID string
+	Offset        int32
+	dataMap       sync.Map
 }
 
 type Value struct {

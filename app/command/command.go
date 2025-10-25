@@ -48,6 +48,7 @@ func (c *Command) HandleCommand(cmd []string) {
 	} else {
 		c.writeError("unknown command '" + cmdName + "'")
 	}
+	c.Writer.Flush()
 }
 
 func (c *Command) commands() map[string]CommandFunc {
@@ -84,11 +85,12 @@ func (c *Command) commands() map[string]CommandFunc {
 		},
 		CmdInfo: func(c *Command, args []string) {
 			if len(args) == 1 && strings.EqualFold(args[0], "replication") {
+				role := "master"
 				if c.RedisServer.ReplicaOf != "" {
-					c.writeBulkString("role:slave")
-					return
+					role = "slave"
 				}
-				c.writeBulkString("role:master")
+				info := fmt.Sprintf(`role:%s master_replid:%s master_repl_offset:%d`, role, c.RedisServer.ReplicationID, c.RedisServer.Offset)
+				c.writeBulkString(info)
 			}
 		},
 	}
