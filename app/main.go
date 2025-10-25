@@ -22,13 +22,20 @@ func main() {
 
 	dir := flag.String("dir", "", "Directory path")
 	dbFilename := flag.String("dbfilename", "", "Database filename")
+	portString := flag.String("port", "", "port to accept conections")
+
 	flag.Parse()
 	dataStore := &data_store.DataStore{
 		DbFilename: *dbFilename,
 		DbDir:      *dir,
 	}
 
-	listener, err := net.Listen("tcp", ":6379")
+	port := ":6379"
+	if portString != nil && *portString != "" {
+		port = fmt.Sprintf(":%s", *portString)
+	}
+
+	listener, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatalf("Failed to bind to port 6379: %v", err)
 	}
