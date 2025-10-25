@@ -37,7 +37,7 @@ func handleConnection(conn net.Conn) {
 
 	reader := bufio.NewReader(conn)
 	writer := bufio.NewWriter(conn)
-
+	commandHandler := NewCommandHelper(writer)
 	for {
 		// Try to decode a RESP array from the reader
 		cmd, err := decodeRESPFromReader(reader)
@@ -51,7 +51,7 @@ func handleConnection(conn net.Conn) {
 		}
 		fmt.Println("Decoded command:", cmd)
 
-		handleCommand(cmd, writer)
+		commandHandler.HandleCommand(cmd)
 
 	}
 }

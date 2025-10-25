@@ -4,25 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"strconv"
-	"strings"
 )
-
-var commands = map[string]func([]string, *bufio.Writer){
-	"echo": func(cmd []string, writer *bufio.Writer) {
-		if len(cmd) > 1 {
-			resp := fmt.Sprintf("$%d\r\n%s\r\n", len(cmd[1]), cmd[1])
-			writer.WriteString(resp)
-			writer.Flush()
-		} else {
-			writer.WriteString("-ERR missing argument\r\n")
-			writer.Flush()
-		}
-	},
-	"ping": func(cmd []string, writer *bufio.Writer) {
-		writer.WriteString("+PONG\r\n")
-		writer.Flush()
-	},
-}
 
 func decodeRESPFromReader(reader *bufio.Reader) ([]string, error) {
 	// 1. Read first line (should be '*<numElements>\r\n')
@@ -67,22 +49,4 @@ func decodeRESPFromReader(reader *bufio.Reader) ([]string, error) {
 		result = append(result, string(data[:strLen]))
 	}
 	return result, nil
-}
-
-func handleCommand(cmd []string, writer *bufio.Writer) {
-	if len(cmd) == 0 {
-		return
-	}
-
-	// Case-insensitive lookup
-	for key, handler := range commands {
-		if strings.EqualFold(cmd[0], key) {
-			handler(cmd, writer)
-			return
-		}
-	}
-
-	// Default unknown command
-	writer.WriteString("-ERR unknown command\r\n")
-	writer.Flush()
 }
