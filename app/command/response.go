@@ -12,7 +12,7 @@ func (c *Command) writeError(msg string) {
 	c.Writer.Flush()
 }
 
-func (c *Command) writeBulk(msg string) {
+func (c *Command) writeBulkString(msg string) {
 	c.Writer.WriteString(fmt.Sprintf("$%d\r\n%s\r\n", len(msg), msg))
 	c.Writer.Flush()
 }

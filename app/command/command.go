@@ -2,6 +2,7 @@ package command
 
 import (
 	"bufio"
+	"fmt"
 	"strings"
 
 	"github.com/codecrafters-io/redis-starter-go/app/data_store"
@@ -39,37 +40,39 @@ func (c *Command) HandleCommand(cmd []string) {
 
 func (c *Command) commands() map[string]CommandFunc {
 	return map[string]CommandFunc{
-		"echo": func(c *Command, args []string) {
+		CmdEcho: func(c *Command, args []string) {
 			if len(args) != 1 {
-				c.writeError("wrong number of arguments for 'echo'")
+				c.writeError(fmt.Sprintf(ErrWrongArgCount, CmdEcho))
 				return
 			}
-			c.writeBulk(args[0])
+			c.writeBulkString(args[0])
 		},
-		"ping": func(c *Command, args []string) {
+		CmdPing: func(c *Command, args []string) {
 			c.writeSimple("PONG")
 		},
-		"set": func(c *Command, args []string) {
+		CmdSet: func(c *Command, args []string) {
 			c.handleSetCommand(args)
 		},
-
-		"get": func(c *Command, args []string) {
+		CmdGet: func(c *Command, args []string) {
 			c.handleGetCommand(args)
 		},
-
-		"config": func(c *Command, args []string) {
+		CmdConfig: func(c *Command, args []string) {
 			if len(args) != 2 {
-				c.writeError("wrong number of arguments for 'config'")
+				c.writeError(fmt.Sprintf(ErrWrongArgCount, CmdConfig))
 				return
 			}
 			switch args[1] {
-			case "dir":
+			case ConfigDir:
 				c.writeArrayBulk(args[1], c.DataStore.DbDir)
-			case "dbfilename":
+			case ConfigDbFile:
 				c.writeArrayBulk(args[1], c.DataStore.DbFilename)
-
 			default:
 				c.writeNil()
+			}
+		},
+		CmdInfo: func(c *Command, args []string) {
+			if len(args) == 1 && strings.EqualFold(args[0], "replication") {
+				c.writeBulkString("role:master")
 			}
 		},
 	}

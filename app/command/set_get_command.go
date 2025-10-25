@@ -27,7 +27,7 @@ func (c *Command) handleGetCommand(args []string) {
 	}
 	if val, present := c.DataStore.Get(args[0]); present {
 		if data, ok := val.(string); ok {
-			c.writeBulk(data)
+			c.writeBulkString(data)
 			return
 		}
 	}
