@@ -12,8 +12,16 @@ func (c *Command) writeError(msg string) {
 	c.Writer.Flush()
 }
 
-func (c *Command) writeBulk(s string) {
-	c.Writer.WriteString(fmt.Sprintf("$%d\r\n%s\r\n", len(s), s))
+func (c *Command) writeBulk(msg string) {
+	c.Writer.WriteString(fmt.Sprintf("$%d\r\n%s\r\n", len(msg), msg))
+	c.Writer.Flush()
+}
+
+func (c *Command) writeArrayBulk(msgs ...string) {
+	c.Writer.WriteString(fmt.Sprintf("*%d\r\n", len(msgs)))
+	for _, s := range msgs {
+		c.Writer.WriteString(fmt.Sprintf("$%d\r\n%s\r\n", len(s), s))
+	}
 	c.Writer.Flush()
 }
 

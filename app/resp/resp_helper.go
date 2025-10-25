@@ -1,4 +1,4 @@
-package main
+package resp
 
 import (
 	"bufio"
@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-func decodeRESPFromReader(reader *bufio.Reader) ([]string, error) {
+func DecodeRESPFromReader(reader *bufio.Reader) ([]string, error) {
 	// 1. Read first line (should be '*<numElements>\r\n')
 	line, err := reader.ReadString('\n')
 	if err != nil {

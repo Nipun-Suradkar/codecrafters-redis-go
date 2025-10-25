@@ -1,31 +1,22 @@
 package command
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
 )
-
-type SetData struct {
-	Value     string
-	ValidTill time.Time
-}
 
 func (c *Command) handleSetCommand(args []string) {
 	if len(args) < 2 {
 		c.writeError("wrong number of arguments for 'set'")
 	}
 
-	data := &SetData{
-		Value: args[1],
-	}
-
+	ttl := time.Duration(0)
 	if len(args) == 4 {
-		data.ValidTill = getValidTillTime(args)
+		ttl = getValidTillTime(args)
 	}
 
-	c.DataMap.Store(args[0], data)
+	c.DataStore.Set(args[0], args[1], ttl)
 	c.writeSimple("OK")
 }
 
@@ -34,39 +25,29 @@ func (c *Command) handleGetCommand(args []string) {
 		c.writeError("wrong number of arguments for 'get'")
 		return
 	}
-	if val, ok := c.DataMap.Load(args[0]); ok {
-		if data, ok := val.(*SetData); ok {
-			now := time.Now().UTC()
-			switch {
-			case data.ValidTill.IsZero():
-				c.writeBulk(fmt.Sprintf("%v", data.Value))
-			case data.ValidTill.After(now):
-				c.writeBulk(fmt.Sprintf("%v", data.Value))
-			default:
-				c.writeNil()
-			}
+	if val, present := c.DataStore.Get(args[0]); present {
+		if data, ok := val.(string); ok {
+			c.writeBulk(data)
 			return
 		}
 	}
 	c.writeNil()
 }
 
-func getValidTillTime(args []string) time.Time {
+func getValidTillTime(args []string) time.Duration {
 	if strings.EqualFold(args[2], "ex") {
 		ttlSeconds, err := strconv.ParseInt(args[3], 10, 64)
 		if err != nil {
-			return time.Time{}
+			return time.Duration(0)
 		}
-		duration := time.Duration(ttlSeconds) * time.Second
-		return time.Now().UTC().Add(duration)
+		return time.Duration(ttlSeconds) * time.Second
 	}
 	if strings.EqualFold(args[2], "px") {
 		ttlMilliSeconds, err := strconv.ParseInt(args[3], 10, 64)
 		if err != nil {
-			return time.Time{}
+			return time.Duration(0)
 		}
-		duration := time.Duration(ttlMilliSeconds) * time.Millisecond
-		return time.Now().UTC().Add(duration)
+		return time.Duration(ttlMilliSeconds) * time.Millisecond
 	}
-	return time.Time{}
+	return time.Duration(0)
 }

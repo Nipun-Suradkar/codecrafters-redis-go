@@ -3,20 +3,21 @@ package command
 import (
 	"bufio"
 	"strings"
-	"sync"
+
+	"github.com/codecrafters-io/redis-starter-go/app/data_store"
 )
 
 type Command struct {
-	DataMap sync.Map
-	Writer  *bufio.Writer
+	DataStore *data_store.DataStore
+	Writer    *bufio.Writer
 }
 
 type CommandInterface interface {
 	HandleCommand(args []string)
 }
 
-func NewCommand(w *bufio.Writer) *Command {
-	return &Command{Writer: w}
+func NewCommand(w *bufio.Writer, dataStore *data_store.DataStore) *Command {
+	return &Command{Writer: w, DataStore: dataStore}
 }
 
 type CommandFunc func(c *Command, args []string)
@@ -54,6 +55,22 @@ func (c *Command) commands() map[string]CommandFunc {
 
 		"get": func(c *Command, args []string) {
 			c.handleGetCommand(args)
+		},
+
+		"config": func(c *Command, args []string) {
+			if len(args) != 2 {
+				c.writeError("wrong number of arguments for 'config'")
+				return
+			}
+			switch args[1] {
+			case "dir":
+				c.writeArrayBulk(args[1], c.DataStore.DbDir)
+			case "dbfilename":
+				c.writeArrayBulk(args[1], c.DataStore.DbFilename)
+
+			default:
+				c.writeNil()
+			}
 		},
 	}
 }
