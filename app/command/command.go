@@ -7,25 +7,25 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/codecrafters-io/redis-starter-go/app/data_store"
+	"github.com/codecrafters-io/redis-starter-go/app/redis_server"
 )
 
 var once sync.Once
 
 type Command struct {
-	DataStore *data_store.DataStore
-	Writer    *bufio.Writer
+	RedisServer *redis_server.RedisServer
+	Writer      *bufio.Writer
 }
 
 type CommandInterface interface {
 	HandleCommand(args []string)
 }
 
-func NewCommand(w *bufio.Writer, dataStore *data_store.DataStore) *Command {
+func NewCommand(w *bufio.Writer, dataStore *redis_server.RedisServer) *Command {
 	once.Do(func() {
 		sort.Strings(SupportedCommands)
 	})
-	return &Command{Writer: w, DataStore: dataStore}
+	return &Command{Writer: w, RedisServer: dataStore}
 }
 
 type CommandFunc func(c *Command, args []string)
@@ -75,15 +75,19 @@ func (c *Command) commands() map[string]CommandFunc {
 			}
 			switch args[1] {
 			case ConfigDir:
-				c.writeArrayBulk(args[1], c.DataStore.DbDir)
+				c.writeArrayBulk(args[1], c.RedisServer.DbDir)
 			case ConfigDbFile:
-				c.writeArrayBulk(args[1], c.DataStore.DbFilename)
+				c.writeArrayBulk(args[1], c.RedisServer.DbFilename)
 			default:
 				c.writeNil()
 			}
 		},
 		CmdInfo: func(c *Command, args []string) {
 			if len(args) == 1 && strings.EqualFold(args[0], "replication") {
+				if c.RedisServer.ReplicaOf != "" {
+					c.writeBulkString("role:slave")
+					return
+				}
 				c.writeBulkString("role:master")
 			}
 		},

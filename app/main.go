@@ -8,9 +8,10 @@ import (
 	"log"
 	"net"
 	"os"
+	"strconv"
 
 	"github.com/codecrafters-io/redis-starter-go/app/command"
-	"github.com/codecrafters-io/redis-starter-go/app/data_store"
+	"github.com/codecrafters-io/redis-starter-go/app/redis_server"
 	"github.com/codecrafters-io/redis-starter-go/app/resp"
 )
 
@@ -20,22 +21,8 @@ var _ = os.Exit
 func main() {
 	log.Println("Server listening on port 6379...")
 
-	dir := flag.String("dir", "", "Directory path")
-	dbFilename := flag.String("dbfilename", "", "Database filename")
-	portString := flag.String("port", "", "port to accept conections")
-
-	flag.Parse()
-	dataStore := &data_store.DataStore{
-		DbFilename: *dbFilename,
-		DbDir:      *dir,
-	}
-
-	port := ":6379"
-	if portString != nil && *portString != "" {
-		port = fmt.Sprintf(":%s", *portString)
-	}
-
-	listener, err := net.Listen("tcp", port)
+	redisServer := initializeRedisServer()
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", redisServer.Port))
 	if err != nil {
 		log.Fatalf("Failed to bind to port 6379: %v", err)
 	}
@@ -52,11 +39,36 @@ func main() {
 			log.Printf("Error accepting connection: %v", err)
 			continue
 		}
-		go handleConnection(conn, dataStore)
+		go handleConnection(conn, redisServer)
 	}
 }
 
-func handleConnection(conn net.Conn, store *data_store.DataStore) {
+func initializeRedisServer() *redis_server.RedisServer {
+	dir := flag.String("dir", "", "Directory path")
+	dbFilename := flag.String("dbfilename", "", "Database filename")
+	portString := flag.String("port", "", "port to accept conections")
+	replicaOf := flag.String("replicaof", "", "replica of server")
+	flag.Parse()
+
+	redisServer := &redis_server.RedisServer{
+		DbFilename: *dbFilename,
+		DbDir:      *dir,
+		ReplicaOf:  *replicaOf,
+	}
+
+	portNum := 6379 //default port
+	if portString != nil && *portString != "" {
+		port, err := strconv.Atoi(*portString)
+		if err != nil {
+			log.Fatalf("Invalid port number: %v", err)
+		}
+		portNum = port
+	}
+	redisServer.Port = portNum
+	return redisServer
+}
+
+func handleConnection(conn net.Conn, store *redis_server.RedisServer) {
 	defer conn.Close()
 
 	reader := bufio.NewReader(conn)

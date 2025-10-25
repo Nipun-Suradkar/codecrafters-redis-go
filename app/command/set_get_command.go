@@ -16,7 +16,7 @@ func (c *Command) handleSetCommand(args []string) {
 		ttl = getValidTillTime(args)
 	}
 
-	c.DataStore.Set(args[0], args[1], ttl)
+	c.RedisServer.Set(args[0], args[1], ttl)
 	c.writeSimple("OK")
 }
 
@@ -25,7 +25,7 @@ func (c *Command) handleGetCommand(args []string) {
 		c.writeError("wrong number of arguments for 'get'")
 		return
 	}
-	if val, present := c.DataStore.Get(args[0]); present {
+	if val, present := c.RedisServer.Get(args[0]); present {
 		if data, ok := val.(string); ok {
 			c.writeBulkString(data)
 			return

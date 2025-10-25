@@ -1,13 +1,15 @@
-package data_store
+package redis_server
 
 import (
 	"sync"
 	"time"
 )
 
-type DataStore struct {
+type RedisServer struct {
 	DbFilename string
 	DbDir      string
+	Port       int
+	ReplicaOf  string
 	dataMap    sync.Map
 }
 
@@ -16,7 +18,7 @@ type Value struct {
 	ExpiresAt time.Time
 }
 
-func (s *DataStore) Set(key string, value interface{}, ttl time.Duration) {
+func (s *RedisServer) Set(key string, value interface{}, ttl time.Duration) {
 	expire := time.Time{}
 	if ttl > 0 {
 		expire = time.Now().Add(ttl)
@@ -24,7 +26,7 @@ func (s *DataStore) Set(key string, value interface{}, ttl time.Duration) {
 	s.dataMap.Store(key, Value{Data: value, ExpiresAt: expire})
 }
 
-func (s *DataStore) Get(key string) (interface{}, bool) {
+func (s *RedisServer) Get(key string) (interface{}, bool) {
 	val, ok := s.dataMap.Load(key)
 	if !ok {
 		return nil, false
