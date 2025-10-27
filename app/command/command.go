@@ -13,19 +13,18 @@ import (
 var once sync.Once
 
 type Command struct {
-	RedisServer *redis_server.RedisServer
-	Writer      *bufio.Writer
+	Writer *bufio.Writer
 }
 
 type CommandInterface interface {
 	HandleCommand(args []string)
 }
 
-func NewCommand(w *bufio.Writer, dataStore *redis_server.RedisServer) *Command {
+func NewCommand(w *bufio.Writer) *Command {
 	once.Do(func() {
 		sort.Strings(SupportedCommands)
 	})
-	return &Command{Writer: w, RedisServer: dataStore}
+	return &Command{Writer: w}
 }
 
 type CommandFunc func(c *Command, args []string)
@@ -76,9 +75,9 @@ func (c *Command) commands() map[string]CommandFunc {
 			}
 			switch args[1] {
 			case ConfigDir:
-				c.writeArrayBulk(args[1], c.RedisServer.DbDir)
+				c.writeArrayBulk(args[1], redis_server.GetRedisServer().DbDir)
 			case ConfigDbFile:
-				c.writeArrayBulk(args[1], c.RedisServer.DbFilename)
+				c.writeArrayBulk(args[1], redis_server.GetRedisServer().DbDir)
 			default:
 				c.writeNil()
 			}
@@ -86,10 +85,10 @@ func (c *Command) commands() map[string]CommandFunc {
 		CmdInfo: func(c *Command, args []string) {
 			if len(args) == 1 && strings.EqualFold(args[0], "replication") {
 				role := "master"
-				if c.RedisServer.ReplicaOf != "" {
+				if redis_server.GetRedisServer().ReplicaOf != "" {
 					role = "slave"
 				}
-				info := fmt.Sprintf(`role:%s master_replid:%s master_repl_offset:%d`, role, c.RedisServer.ReplicationID, c.RedisServer.Offset)
+				info := fmt.Sprintf(`role:%s master_replid:%s master_repl_offset:%d`, role, redis_server.GetRedisServer().ReplicationID, redis_server.GetRedisServer().Offset)
 				c.writeBulkString(info)
 			}
 		},

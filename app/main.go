@@ -2,13 +2,11 @@ package main
 
 import (
 	"bufio"
-	"flag"
 	"fmt"
 	"io"
 	"log"
 	"net"
 	"os"
-	"strconv"
 
 	"github.com/codecrafters-io/redis-starter-go/app/command"
 	"github.com/codecrafters-io/redis-starter-go/app/redis_server"
@@ -22,13 +20,13 @@ var _ = os.Exit
 func main() {
 	log.Println("Server listening on port 6379...")
 
-	redisServer := initializeRedisServer()
+	redis_server.InitializeRedisServer()
 
-	if redisServer.ReplicaOf != "" {
-		replication.InformMasterServer(redisServer)
+	if redis_server.GetRedisServer().ReplicaOf != "" {
+		replication.InformMasterServer(redis_server.GetRedisServer())
 	}
 
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", redisServer.Port))
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", redis_server.GetRedisServer().Port))
 	if err != nil {
 		log.Fatalf("Failed to bind to port 6379: %v", err)
 	}
@@ -45,42 +43,16 @@ func main() {
 			log.Printf("Error accepting connection: %v", err)
 			continue
 		}
-		go handleConnection(conn, redisServer)
+		go handleConnection(conn)
 	}
 }
 
-func initializeRedisServer() *redis_server.RedisServer {
-	dir := flag.String("dir", "", "Directory path")
-	dbFilename := flag.String("dbfilename", "", "Database filename")
-	portString := flag.String("port", "", "port to accept conections")
-	replicaOf := flag.String("replicaof", "", "replica of server")
-	flag.Parse()
-
-	redisServer := &redis_server.RedisServer{
-		DbFilename:    *dbFilename,
-		DbDir:         *dir,
-		ReplicaOf:     *replicaOf,
-		ReplicationID: "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb",
-	}
-
-	portNum := 6379 //default port
-	if portString != nil && *portString != "" {
-		port, err := strconv.Atoi(*portString)
-		if err != nil {
-			log.Fatalf("Invalid port number: %v", err)
-		}
-		portNum = port
-	}
-	redisServer.Port = portNum
-	return redisServer
-}
-
-func handleConnection(conn net.Conn, store *redis_server.RedisServer) {
+func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
 	reader := bufio.NewReader(conn)
 	writer := bufio.NewWriter(conn)
-	commandHandler := command.NewCommand(writer, store)
+	commandHandler := command.NewCommand(writer)
 
 	for {
 		// Try to decode a RESP array from the reader
