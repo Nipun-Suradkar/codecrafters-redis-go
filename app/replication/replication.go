@@ -44,6 +44,7 @@ func sendSyncMsgsToMaster(writer *bufio.Writer, reader *bufio.Reader, server *re
 		{"PING"},
 		{"REPLCONF", "listening-port", strconv.Itoa(server.Port)},
 		{"REPLCONF", "capa", "psync2"},
+		{"PSYNC", "?", "-1"},
 	}
 
 	for _, cmd := range syncCmds {
