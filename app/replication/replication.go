@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/codecrafters-io/redis-starter-go/app/redis_server"
+	"github.com/codecrafters-io/redis-starter-go/app/resp"
 )
 
 func InformMasterServer(redisServer *redis_server.RedisServer) {
@@ -58,23 +59,8 @@ func sendSyncMsgsToMaster(writer *bufio.Writer, reader *bufio.Reader, server *re
 
 // sendAndValidate writes a command and checks for valid master response
 func sendAndValidate(writer *bufio.Writer, reader *bufio.Reader, cmd ...string) error {
-	if err := writeArrayBulk(writer, cmd...); err != nil {
-		return fmt.Errorf("failed to send command: %w", err)
-	}
+	resp.WriteArrayBulk(writer, cmd...)
 	return parseMasterResponse(reader)
-}
-
-// writeArrayBulk encodes and sends a Redis RESP array
-func writeArrayBulk(writer *bufio.Writer, parts ...string) error {
-	if _, err := fmt.Fprintf(writer, "*%d\r\n", len(parts)); err != nil {
-		return err
-	}
-	for _, part := range parts {
-		if _, err := fmt.Fprintf(writer, "$%d\r\n%s\r\n", len(part), part); err != nil {
-			return err
-		}
-	}
-	return writer.Flush()
 }
 
 // parseMasterResponse reads and validates a Redis master response

@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/codecrafters-io/redis-starter-go/app/redis_server"
+	"github.com/codecrafters-io/redis-starter-go/app/resp"
 )
 
 var once sync.Once
@@ -36,7 +37,7 @@ func (c *Command) HandleCommand(cmd []string) {
 
 	cmdName := strings.ToLower(cmd[0])
 	if !isSupportedCommand(cmdName) {
-		c.writeError(fmt.Sprintf("ERR unknown command '%s'", cmdName))
+		resp.WriteError(c.Writer, fmt.Sprintf("ERR unknown command '%s'", cmdName))
 		return
 	}
 
@@ -45,7 +46,7 @@ func (c *Command) HandleCommand(cmd []string) {
 	if handler, ok := c.commands()[cmdName]; ok {
 		handler(c, args)
 	} else {
-		c.writeError("unknown command '" + cmdName + "'")
+		resp.WriteError(c.Writer, "unknown command '"+cmdName+"'")
 	}
 	c.Writer.Flush()
 }
@@ -54,13 +55,13 @@ func (c *Command) commands() map[string]CommandFunc {
 	return map[string]CommandFunc{
 		CmdEcho: func(c *Command, args []string) {
 			if len(args) != 1 {
-				c.writeError(fmt.Sprintf(ErrWrongArgCount, CmdEcho))
+				resp.WriteError(c.Writer, fmt.Sprintf(ErrWrongArgCount, CmdEcho))
 				return
 			}
-			c.writeBulkString(args[0])
+			resp.WriteBulkString(c.Writer, args[0])
 		},
 		CmdPing: func(c *Command, args []string) {
-			c.writeSimple("PONG")
+			resp.WriteSimple(c.Writer, "PONG")
 		},
 		CmdSet: func(c *Command, args []string) {
 			c.handleSetCommand(args)
@@ -70,16 +71,16 @@ func (c *Command) commands() map[string]CommandFunc {
 		},
 		CmdConfig: func(c *Command, args []string) {
 			if len(args) != 2 {
-				c.writeError(fmt.Sprintf(ErrWrongArgCount, CmdConfig))
+				resp.WriteError(c.Writer, fmt.Sprintf(ErrWrongArgCount, CmdConfig))
 				return
 			}
 			switch args[1] {
 			case ConfigDir:
-				c.writeArrayBulk(args[1], redis_server.GetRedisServer().DbDir)
+				resp.WriteArrayBulk(c.Writer, args[1], redis_server.GetRedisServer().DbDir)
 			case ConfigDbFile:
-				c.writeArrayBulk(args[1], redis_server.GetRedisServer().DbDir)
+				resp.WriteArrayBulk(c.Writer, args[1], redis_server.GetRedisServer().DbDir)
 			default:
-				c.writeNil()
+				resp.WriteNil(c.Writer)
 			}
 		},
 		CmdInfo: func(c *Command, args []string) {
@@ -89,7 +90,7 @@ func (c *Command) commands() map[string]CommandFunc {
 					role = "slave"
 				}
 				info := fmt.Sprintf(`role:%s master_replid:%s master_repl_offset:%d`, role, redis_server.GetRedisServer().ReplicationID, redis_server.GetRedisServer().Offset)
-				c.writeBulkString(info)
+				resp.WriteBulkString(c.Writer, info)
 			}
 		},
 	}
