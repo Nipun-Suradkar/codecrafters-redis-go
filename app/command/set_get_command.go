@@ -6,11 +6,12 @@ import (
 	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/app/redis_server"
+	"github.com/codecrafters-io/redis-starter-go/app/resp"
 )
 
 func (c *Command) handleSetCommand(args []string) {
 	if len(args) < 2 {
-		c.writeError("wrong number of arguments for 'set'")
+		resp.WriteError(c.Writer, "wrong number of arguments for 'set'")
 	}
 
 	ttl := time.Duration(0)
@@ -19,21 +20,21 @@ func (c *Command) handleSetCommand(args []string) {
 	}
 
 	redis_server.GetDataStore().Set(args[0], args[1], ttl)
-	c.writeSimple("OK")
+	resp.WriteSimple(c.Writer, "OK")
 }
 
 func (c *Command) handleGetCommand(args []string) {
 	if len(args) != 1 {
-		c.writeError("wrong number of arguments for 'get'")
+		resp.WriteError(c.Writer, "wrong number of arguments for 'get'")
 		return
 	}
 	if val, present := redis_server.GetDataStore().Get(args[0]); present {
 		if data, ok := val.(string); ok {
-			c.writeBulkString(data)
+			resp.WriteBulkString(c.Writer, data)
 			return
 		}
 	}
-	c.writeNil()
+	resp.WriteNil(c.Writer)
 }
 
 func getValidTillTime(args []string) time.Duration {
