@@ -1,12 +1,13 @@
 package command
 
 const (
-	CmdEcho   = "echo"
-	CmdPing   = "ping"
-	CmdSet    = "set"
-	CmdGet    = "get"
-	CmdConfig = "config"
-	CmdInfo   = "info"
+	CmdEcho              = "echo"
+	CmdPing              = "ping"
+	CmdSet               = "set"
+	CmdGet               = "get"
+	CmdConfig            = "config"
+	CmdInfo              = "info"
+	CmdReplicationConfig = "replconf"
 
 	ConfigDir    = "dir"
 	ConfigDbFile = "dbfilename"

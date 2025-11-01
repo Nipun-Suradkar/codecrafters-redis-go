@@ -15,6 +15,7 @@ type RedisServer struct {
 	ReplicaOf     string
 	ReplicationID string
 	Offset        int32
+	IsSlaveNode   bool
 }
 
 func GetRedisServer() *RedisServer {
@@ -33,6 +34,8 @@ func InitializeRedisServer() {
 		log.Fatalf("Invalid port number: %v", err)
 	}
 
+	isSalveNode := *replicaOf != ""
+
 	serverConfig = &RedisServer{
 		DbDir:         *dir,
 		DbFilename:    *dbFilename,
@@ -40,5 +43,6 @@ func InitializeRedisServer() {
 		Port:          port,
 		ReplicationID: "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb", // fixed unique value
 		Offset:        0,
+		IsSlaveNode:   isSalveNode,
 	}
 }

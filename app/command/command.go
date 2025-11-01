@@ -93,6 +93,9 @@ func (c *Command) commands() map[string]CommandFunc {
 				resp.WriteBulkString(c.Writer, info)
 			}
 		},
+		CmdReplicationConfig: func(c *Command, args []string) {
+			resp.WriteSimple(c.Writer, "OK")
+		},
 	}
 
 }
