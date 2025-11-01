@@ -22,4 +22,5 @@ var SupportedCommands = []string{
 	CmdGet,
 	CmdConfig,
 	CmdInfo,
+	CmdReplicationConfig,
 }
