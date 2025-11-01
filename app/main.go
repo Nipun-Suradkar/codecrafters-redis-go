@@ -23,9 +23,9 @@ func main() {
 	redis_server.InitializeRedisServer()
 
 	if redis_server.GetRedisServer().IsSlaveNode {
-		replication.InformMasterServer(redis_server.GetRedisServer())
+		replication.InformMasterServer()
 	}
-	
+
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", redis_server.GetRedisServer().Port))
 	if err != nil {
 		log.Fatalf("Failed to bind to port 6379: %v", err)

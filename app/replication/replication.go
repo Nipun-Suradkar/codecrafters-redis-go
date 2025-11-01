@@ -12,8 +12,8 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/app/resp"
 )
 
-func InformMasterServer(redisServer *redis_server.RedisServer) {
-	replicaOf := redisServer.ReplicaOf
+func InformMasterServer() {
+	replicaOf := redis_server.GetRedisServer().ReplicaOf
 	if replicaOf == "" {
 		return
 	}
@@ -22,6 +22,8 @@ func InformMasterServer(redisServer *redis_server.RedisServer) {
 	if len(masterInfo) != 2 {
 		return
 	}
+
+	log.Println("Informing master server")
 
 	masterHost := masterInfo[0]
 	masterPort := masterInfo[1]
@@ -35,15 +37,15 @@ func InformMasterServer(redisServer *redis_server.RedisServer) {
 	writer := bufio.NewWriter(conn)
 	reader := bufio.NewReader(conn)
 
-	sendSyncMsgsToMaster(writer, reader, redisServer)
+	sendSyncMsgsToMaster(writer, reader)
 	defer conn.Close()
 
 }
 
-func sendSyncMsgsToMaster(writer *bufio.Writer, reader *bufio.Reader, server *redis_server.RedisServer) error {
+func sendSyncMsgsToMaster(writer *bufio.Writer, reader *bufio.Reader) error {
 	syncCmds := [][]string{
 		{"PING"},
-		{"REPLCONF", "listening-port", strconv.Itoa(server.Port)},
+		{"REPLCONF", "listening-port", strconv.Itoa(redis_server.GetRedisServer().Port)},
 		{"REPLCONF", "capa", "psync2"},
 		{"PSYNC", "?", "-1"},
 	}
@@ -60,6 +62,7 @@ func sendSyncMsgsToMaster(writer *bufio.Writer, reader *bufio.Reader, server *re
 // sendAndValidate writes a command and checks for valid master response
 func sendAndValidate(writer *bufio.Writer, reader *bufio.Reader, cmd ...string) error {
 	resp.WriteArrayBulk(writer, cmd...)
+	writer.Flush()
 	return parseMasterResponse(reader)
 }
 

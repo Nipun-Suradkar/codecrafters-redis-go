@@ -34,7 +34,10 @@ func InitializeRedisServer() {
 		log.Fatalf("Invalid port number: %v", err)
 	}
 
-	isSalveNode := *replicaOf != ""
+	isSlaveNode := false
+	if len(*replicaOf) > 0 {
+		isSlaveNode = true
+	}
 
 	serverConfig = &RedisServer{
 		DbDir:         *dir,
@@ -43,6 +46,8 @@ func InitializeRedisServer() {
 		Port:          port,
 		ReplicationID: "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb", // fixed unique value
 		Offset:        0,
-		IsSlaveNode:   isSalveNode,
+		IsSlaveNode:   isSlaveNode,
 	}
+
+	log.Println("Starting redis server with config", serverConfig)
 }
